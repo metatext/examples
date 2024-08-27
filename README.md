@@ -1,6 +1,6 @@
 # Guard client example
 
-`$ python eval_example.py`
+```$ python eval_example.py```
 
 ```
 INFO:root:Starting the application
