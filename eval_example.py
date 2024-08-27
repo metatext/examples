@@ -13,7 +13,7 @@ def call_llm(messages):
   )
   return response.choices[0].message.content
 
-# # Read application
+# # Read application from file
 # with open('application.json') as f:
 #     application = json.loads(f.read())
 #     application_id = application.get("application_id")
