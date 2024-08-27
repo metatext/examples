@@ -13,7 +13,7 @@ def call_llm(messages):
   )
   return response.choices[0].message.content
 
-# # Read application from file
+# # read application from file
 # with open('application.json') as f:
 #     application = json.loads(f.read())
 #     application_id = application.get("application_id")
@@ -31,9 +31,8 @@ def call_llm(messages):
 
 
 
-# Get the current time
+# fet the current time
 now = datetime.now()
-# Format the time as desired (e.g., "1:00 AM" or "9:00 AM")
 time_of_day = now.strftime("%I:%M %p")
 
 application_id = "YOUR_APPLICATION_ID"
@@ -60,7 +59,7 @@ policy_1 = dict(
             type="PASS"
         )   
     ],
-    override_response=None,# Could add a default response here
+    override_response=None,# could add a default response here
 )
 
 for p in [policy_1]:
