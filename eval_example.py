@@ -68,9 +68,15 @@ for p in [policy_1]:
     )
 
 # user input
-messages = [
-    {"role": "user", "content": "Hi! I would like to create an investment account."},
-]
+user_input = input("User Input (Leave empty for default): ")
+if user_input:
+    messages = [
+        {"role": "user", "content": user_input},
+    ]
+else:
+    messages = [
+        {"role": "user", "content": "Hi! I would like to create an investment account."},
+    ]
 
 logging.info(f"User input: {json.dumps(messages[-1], indent=4)}")
 
