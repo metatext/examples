@@ -32,23 +32,21 @@ class Guard:
         Adds an application to the Metatext API.
         
         :param application_id: Unique ID for the application.
-        :param application_name: Name of the application.
+        :param system_prompt: LLM instructions.
         """
         application = {
             "id": application_id,
             "system_prompt": system_prompt
         }
-        self.application_id = application_id
         self.application = application
 
     def add_policy(self, policy_id, rule, examples, override_response=None):
         """
         Adds a policy to the override_policy list.
-        
-        :param description: Description of the policy.
-        :param example: A list of example dictionaries showing how the policy should behave.
+
         :param policy_id: Unique ID for the policy.
-        :param severity: Severity level of the policy (e.g., CRITICAL).
+        :param rule: Description of the policy.
+        :param example: A list of example dictionaries showing how the policy should behave.
         :param override_response: Optional response to override when the policy triggers.
         """
         policy = {
@@ -75,7 +73,7 @@ class Guard:
         
         data = {
             "messages": messages,
-            "application": self.application_id,
+            "application": self.application.get("id"),
             "threshold": threshold,
             "correction_enabled": correction_enabled,
             "fail_fast": fail_fast,
