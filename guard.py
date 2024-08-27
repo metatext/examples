@@ -89,4 +89,4 @@ class Guard:
         return response.status_code, result
 
 # Example usage:
-client = Guard(api_key=os.getenv("METATEXT_API_KEY"))
+client = Guard(api_key=API_KEY)
