@@ -1,6 +1,39 @@
 # Guard client example
 
-```$ python eval_example.py```
+## Init
+```
+client = Guard(api_key=os.getenv("METATEXT_API_KEY"))
+```
+
+## Add policy
+```
+policy_1 = dict(
+    policy_id="greetings",
+    rule="""Always say greetings depending on the time of day:
+    After 1:00 AM and before 12:00 PM, say "Good morning."
+    After 12:00 PM and before 6:00 PM, say "Good afternoon."
+    After 6:00 PM and before 9:00 PM, say "Good evening."
+    After 9:00 PM and before 1:00 AM, say "Good night.""",
+    examples=[dict(
+        output_example="Saying 'Good morning!' when current time is after 6:00PM",
+        type="FAIL"
+        ),
+        dict(
+            output_example="Hi!",
+            type="FAIL"
+        ),
+        dict(
+            output_example="Hi, good evening!",
+            type="PASS"
+        )   
+    ],
+    override_response=None,# Could add a default response here
+)
+
+client.add_policy(
+        **p
+)
+```
 
 ```
 INFO:root:Starting the application
