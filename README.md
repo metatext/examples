@@ -1,12 +1,12 @@
 # Guard client example
 
 ## Init
-```
+```python
 client = Guard(api_key=os.getenv("METATEXT_API_KEY"))
 ```
 
 ## Add policy
-```
+```python
 policy_1 = dict(
     policy_id="greetings",
     rule="""Always say greetings depending on the time of day:
@@ -35,7 +35,9 @@ client.add_policy(
 )
 ```
 
-```
+### Example run
+
+```python
 INFO:root:Starting the application
 INFO:root:User input: {
     "role": "user",
