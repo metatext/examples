@@ -6,7 +6,7 @@ client = Guard(api_key=os.getenv("METATEXT_API_KEY"))
 ```
 
 ## Add application
-```
+```python
 client.add_application(application_id=application_id, system_prompt=system_prompt)
 ```
 
