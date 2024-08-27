@@ -4,7 +4,7 @@ import os
 import logging
 from dotenv import load_dotenv
 
-load_dotenv() # load 
+load_dotenv()
 
 # set app logger name
 logging.getLogger("Test").setLevel(logging.INFO)
@@ -15,6 +15,7 @@ URL = 'https://ai-guard.metatext.ai'
 EVALUATE = '/v1/evaluate'
 API_KEY = os.getenv("METATEXT_API_KEY")
 
+# client
 class Guard:
     def __init__(self, api_key):
       
@@ -88,5 +89,5 @@ class Guard:
         assert response.status_code == 200 or result is not None, f"Failed to evaluate messages: {result}"
         return response.status_code, result
 
-# Example usage:
+# example usage
 client = Guard(api_key=API_KEY)
