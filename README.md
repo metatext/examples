@@ -5,6 +5,11 @@
 client = Guard(api_key=os.getenv("METATEXT_API_KEY"))
 ```
 
+## Add application
+```
+client.add_application(application_id=application_id, system_prompt=system_prompt)
+```
+
 ## Add policy
 ```python
 policy_1 = dict(
