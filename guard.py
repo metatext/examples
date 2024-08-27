@@ -25,7 +25,6 @@ class Guard:
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json',
         }
-        self.application_id = application_id
         self.override_policy = []  # Initialize an empty list for policies
 
     def add_application(self, application_id, system_prompt = None):
@@ -39,6 +38,7 @@ class Guard:
             "id": application_id,
             "system_prompt": system_prompt
         }
+        self.application_id = application_id
         self.application = application
 
     def add_policy(self, policy_id, rule, examples, override_response=None):
