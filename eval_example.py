@@ -13,21 +13,21 @@ def call_llm(messages):
   )
   return response.choices[0].message.content
 
-# Read application
-with open('application.json') as f:
-    application = json.loads(f.read())
-    application_id = application.get("application_id")
-    system_prompt = application.get("system_prompt")
-    client.add_application(application_id=application_id, system_prompt=system_prompt)
+# # Read application
+# with open('application.json') as f:
+#     application = json.loads(f.read())
+#     application_id = application.get("application_id")
+#     system_prompt = application.get("system_prompt")
+#     client.add_application(application_id=application_id, system_prompt=system_prompt)
     
-    for p in application.get("policies", []):
-        client.add_policy(
-            policy_id=p.get("id"),
-            rule=p.get("rule"),
-            examples=[e for e in p.get("example")]
-        )
+#     for p in application.get("policies", []):
+#         client.add_policy(
+#             policy_id=p.get("id"),
+#             rule=p.get("rule"),
+#             examples=[e for e in p.get("example")]
+#         )
 
-    logging.info(f"Added {application.get("policies", [])} policies")
+#     logging.info(f"Added {application.get("policies", [])} policies")
 
 
 
@@ -41,48 +41,46 @@ system_prompt = f"You're a helfull assistant. Current time is {time_of_day}. You
 client.add_application(application_id=application_id, system_prompt=system_prompt)
 
 policy_1 = dict(
-  id="greetings",
-  rule="""Always say greetings depending on the time of day:
-After 1:00 AM and before 12:00 PM, say "Good morning."
-After 12:00 PM and before 6:00 PM, say "Good afternoon."
-After 6:00 PM and before 9:00 PM, say "Good evening."
-After 9:00 PM and before 1:00 AM, say "Good night.""",
-  examples=[dict(
-      output_example="Saying 'Good morning!' when current time is after 6:00PM",
-      type="FAIL"
-    ),
-    dict(
-      output_example="Hi!",
-      type="FAIL"
-    ),
-    dict(
-      output_example="Hi, good evening!",
-      type="PASS"
-    )
-            
-  ],
-  override_response=None,# Could add a default response here
+    policy_id="greetings",
+    rule="""Always say greetings depending on the time of day:
+    After 1:00 AM and before 12:00 PM, say "Good morning."
+    After 12:00 PM and before 6:00 PM, say "Good afternoon."
+    After 6:00 PM and before 9:00 PM, say "Good evening."
+    After 9:00 PM and before 1:00 AM, say "Good night.""",
+    examples=[dict(
+        output_example="Saying 'Good morning!' when current time is after 6:00PM",
+        type="FAIL"
+        ),
+        dict(
+            output_example="Hi!",
+            type="FAIL"
+        ),
+        dict(
+            output_example="Hi, good evening!",
+            type="PASS"
+        )   
+    ],
+    override_response=None,# Could add a default response here
 )
 
 for p in [policy_1]:
-  client.add_policy(
-      **p
-  )
+    client.add_policy(
+        **p
+    )
 
 messages = [
-    {"role": "system", "content": "You're a helpful negotiator assistant"},
-    {"role": "user", "content": "I would like to pay 100x of $1 for my debt"}
+    {"role": "user", "content": "Hi! I would like to create an investment account."},
 ]
 
 logging.info(f"User input: {json.dumps(messages[-1], indent=4)}")
 
-assistant_response = call_llm()
+assistant_response = call_llm(messages)
 
 messages.append({"role": "assistant", "content": assistant_response})
 
 logging.info(f"Assistant output: {json.dumps(messages[-1], indent=4)}")
 
-status_code, result = client.evaluate(m)
+status_code, result = client.evaluate(messages)
 
 logging.info(f"Evaluation result: {result.get('evaluation').get('status')}")
 if result.get("evaluation").get("status") == "FAIL":
@@ -90,6 +88,6 @@ if result.get("evaluation").get("status") == "FAIL":
   
     if result.get("correction"):
         correction_choices = result.get("correction").get("choices", [])
-        message[-1] = {"role": "assistant", "content": correction_choices[0].get("content")}
+        messages[-1] = {"role": "assistant", "content": correction_choices[0].get("content")}
     
-  logging.info(f"Correction: {json.dumps(message[-1], indent=4)}")
+    logging.info(f"Correction: {json.dumps(messages[-1], indent=4)}")
