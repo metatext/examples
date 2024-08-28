@@ -7,26 +7,28 @@ python eval_example.py
 ```
 #### Output
 ```python
-INFO:root:Starting the application
-INFO:root:User input: {
+INFO:eval:Starting the application
+INFO:guard:Added policy: greetings Total: 1
+User Input (Leave empty for default): 
+INFO:eval:User input: {
     "role": "user",
     "content": "Hi! I would like to create an investment account."
 }
 INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
-INFO:root:Assistant output: {
+INFO:eval:Assistant output: {
     "role": "assistant",
-    "content": "Creating an investment account is a great step towards building your financial future! Here\u2019s a general guide on how to get started:\n\n### 1. Determine Your Investment Goals\n- **Purpose**: Are you saving for retirement, a house, or other goals?\n- **Time Horizon**: How long do you plan to invest? Short-term (1-3 years), medium-term (3-10 years), or long-term (10+ years)?\n- **Risk Tolerance**: Assess your comfort"
+    "content": "Creating an investment account is a great step toward building wealth. Here\u2019s a basic guide on how to get started:\n\n### Steps to Create an Investment Account\n\n1. **Determine Your Investment Goals**:\n   - Are you saving for retirement, a home, education, or something else?\n   - This will guide your investment choices.\n\n2. **Choose the Type of Account**:\n   - **Brokerage Account**: For general investing; you can buy and sell stocks, bonds, and mutual funds"
 }
 INFO:httpx:HTTP Request: POST https://guard-api.metatext.ai/v1/evaluate "HTTP/1.1 200 OK"
-INFO:root:Evaluation result: FAIL
-INFO:root:Policy violations:
+INFO:eval:Evaluation result: FAIL
+INFO:eval:Policy violations: 
 {
     "policy_id": "greetings",
-    "score": 0.931
+    "score": 0.96
 }
-INFO:root:Correction: {
+INFO:eval:Correction: {
     "role": "assistant",
-    "content": "Hi, good evening! I'm happy to help you create an investment account with ACME company. Creating an investment account is a great step towards building your financial future! Here's a general guide on how to get started: ### 1. Determine Your Investment Goals - **Purpose**: Are you saving for retirement, a house, or other goals? - **Time Horizon**: How long do you plan to invest? Short-term (1-3 years), medium-term (3-10 years), or long-term (10+ years)? - **Risk Tolerance**: Assess your comfort"
+    "content": "Good morning! I'm happy to help you create an investment account with ACME company. Creating an investment account is a great step toward building wealth. Here's a basic guide on how to get started: ### Steps to Create an Investment Account 1. **Determine Your Investment Goals**: - Are you saving for retirement, a home, education, or something else? - This will guide your investment choices. 2. **Choose the Type of Account**: - **Brokerage Account**: For general investing; you can buy and sell stocks, bonds, and mutual funds"
 }
 ```
 

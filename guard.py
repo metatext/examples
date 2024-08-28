@@ -85,7 +85,7 @@ class Guard:
             "override_response": override_response # override if any policy is violated
         }
 
-        with httpx.Client((timeout=None) as client:
+        with httpx.Client(timeout=None) as client:
             response = client.post(self.url, headers=self.headers, json=data)
             result = response.json()
             assert response.status_code == 200 or result is not None, f"Failed to evaluate messages: {result}"
