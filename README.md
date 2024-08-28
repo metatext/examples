@@ -5,7 +5,7 @@
 pip install -r requirements.txt
 python eval_example.py
 ```
-#### Terminal
+#### Output
 ```python
 INFO:root:Starting the application
 INFO:root:User input: {
