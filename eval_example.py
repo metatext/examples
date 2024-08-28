@@ -2,6 +2,18 @@
 from datetime import datetime
 from guard import Guard
 import openai
+import os
+import logging
+import json
+
+# set app logger name
+logging.basicConfig(level=logging.INFO)
+
+# Enable logging for httpx
+logger = logging.getLogger("eval")
+logger.setLevel(logging.INFO)
+
+logger.info("Starting the application")
 
 client = Guard(api_key=os.getenv("METATEXT_API_KEY"))
 
@@ -27,7 +39,7 @@ def call_llm(messages):
 #             examples=[e for e in p.get("example")]
 #         )
 
-#     logging.info(f"Added {application.get("policies", [])} policies")
+#     logger.info(f"Added {application.get("policies", [])} policies")
 
 # set the current time
 now = datetime.now()
@@ -78,24 +90,24 @@ else:
         {"role": "user", "content": "Hi! I would like to create an investment account."},
     ]
 
-logging.info(f"User input: {json.dumps(messages[-1], indent=4)}")
+logger.info(f"User input: {json.dumps(messages[-1], indent=4)}")
 
 # generate an ai response
 assistant_response = call_llm(messages)
 
 messages.append({"role": "assistant", "content": assistant_response})
 
-logging.info(f"Assistant output: {json.dumps(messages[-1], indent=4)}")
+logger.info(f"Assistant output: {json.dumps(messages[-1], indent=4)}")
 
 # run guard evaluate
 status_code, result = client.evaluate(messages)
 
-logging.info(f"Evaluation result: {result.get('evaluation').get('status')}")
+logger.info(f"Evaluation result: {result.get('evaluation').get('status')}")
 if result.get("evaluation").get("status") == "FAIL":
-    [logging.info(f"Policy violations: \n{json.dumps(r, indent=4)}") for r in result.get("evaluation").get("policy_violations")]
+    [logger.info(f"Policy violations: \n{json.dumps(r, indent=4)}") for r in result.get("evaluation").get("policy_violations")]
   
     if result.get("correction"):
         correction_choices = result.get("correction").get("choices", [])
         messages[-1] = {"role": "assistant", "content": correction_choices[0].get("content")}
     
-    logging.info(f"Correction: {json.dumps(messages[-1], indent=4)}")
+    logger.info(f"Correction: {json.dumps(messages[-1], indent=4)}")

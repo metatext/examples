@@ -1,17 +1,19 @@
-import requests
+import httpx
 import json
 import os
-import logging
 from dotenv import load_dotenv
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
+
+# Enable logging for httpx
+logger = logging.getLogger("guard")
+logger.setLevel(logging.INFO)
 
 load_dotenv()
 
-# set app logger name
-logging.getLogger("Test").setLevel(logging.INFO)
-logging.basicConfig(level=logging.INFO)
-logging.info("Starting the application")
-
-URL = 'https://ai-guard.metatext.ai'
+URL = 'https://guard-api.metatext.ai'
 EVALUATE = '/v1/evaluate'
 API_KEY = os.getenv("METATEXT_API_KEY")
 
@@ -58,6 +60,7 @@ class Guard:
             policy["override_response"] = override_response # override response if this policy is violated
         
         self.override_policy.append(policy)
+        logger.info(f"Added policy: {policy_id} Total: {len(self.override_policy)}")
     
     def evaluate(self, messages, threshold=0.3, correction_enabled=True, override_response=None, fail_fast=False, policy_ids=None):
         if policy_ids is None:
@@ -82,10 +85,11 @@ class Guard:
             "override_response": override_response # override if any policy is violated
         }
 
-        response = requests.post(self.url, headers=self.headers, json=data)
-        result = response.json()
-        assert response.status_code == 200 or result is not None, f"Failed to evaluate messages: {result}"
-        return response.status_code, result
+        with httpx.Client() as client:
+            response = client.post(self.url, headers=self.headers, json=data)
+            result = response.json()
+            assert response.status_code == 200 or result is not None, f"Failed to evaluate messages: {result}"
+            return response.status_code, result
 
 # example usage
 client = Guard(api_key=API_KEY)
