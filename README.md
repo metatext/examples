@@ -17,6 +17,7 @@ INFO:root:Assistant output: {
     "role": "assistant",
     "content": "Creating an investment account is a great step towards building your financial future! Here\u2019s a general guide on how to get started:\n\n### 1. Determine Your Investment Goals\n- **Purpose**: Are you saving for retirement, a house, or other goals?\n- **Time Horizon**: How long do you plan to invest? Short-term (1-3 years), medium-term (3-10 years), or long-term (10+ years)?\n- **Risk Tolerance**: Assess your comfort"
 }
+INFO:httpx:HTTP Request: POST https://guard-api.metatext.ai/v1/evaluate "HTTP/1.1 200 OK"
 INFO:root:Evaluation result: FAIL
 INFO:root:Policy violations:
 {
