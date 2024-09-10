@@ -46,32 +46,100 @@ client.add_application(application_id=application_id, system_prompt=system_promp
 
 ## Add policy
 ```python
-policy_1 = dict(
-    policy_id="greetings",
-    rule="""Always say greetings depending on the time of day:
-    After 1:00 AM and before 12:00 PM, say "Good morning."
-    After 12:00 PM and before 6:00 PM, say "Good afternoon."
-    After 6:00 PM and before 9:00 PM, say "Good evening."
-    After 9:00 PM and before 1:00 AM, say "Good night.""",
-    examples=[dict(
-        output_example="Saying 'Good morning!' when current time is after 6:00PM",
-        type="FAIL"
-        ),
-        dict(
-            output_example="Hi!",
-            type="FAIL"
-        ),
-        dict(
-            output_example="Hi, good evening!",
-            type="PASS"
-        )   
-    ],
-    override_response=None,# Could add a default response here
-)
+policy_list = [
 
-client.add_policy(
-        **p
-)
+        
+        Policy(
+            id="detect-direct-prompt-injection",
+            description="",
+            rules=[
+                PolicyRule(
+                    type=PolicyRuleType.JAILBREAK,
+                    expected=PolicyRuleExpected.FAIL,
+                    value="",
+                    threshold=0.8,
+                ),
+            ],
+            target=PolicyTarget.INPUT
+        ),
+
+        
+
+        Policy(
+            id="follow-negotiation",
+            description="",
+            rules=[
+                PolicyRule(
+                    type=PolicyRuleType.RUBRIC,
+                    expected=PolicyRuleExpected.FAIL,
+                    value="Você deve trabalhar somente as condições de pagamento disponíveis, 1x de R$300 ou 3x de R$ 100. Não aceite ou sugira outros termos. Sem descontos.",
+                    threshold=0.3, # 0.0 very strict, 1.0 would be more lenient
+                ),
+            ],
+            target=PolicyTarget.OUTPUT
+        ),
+
+        
+
+        Policy(
+            id="do-not-mention",
+            description="",
+            rules=[
+                PolicyRule(
+                    type=PolicyRuleType.CLASSIFIER,
+                    expected=PolicyRuleExpected.FAIL,
+                    value="Itaú, Bradesco, Santander", # class name or "class_name1, class_name2"
+                    threshold=0.7
+                ),
+                PolicyRule(
+                    type=PolicyRuleType.SIMILARITY,
+                    expected=PolicyRuleExpected.FAIL,
+                    value="concorrentes",
+                    threshold=0.8
+                ),
+                PolicyRule(
+                    type=PolicyRuleType.FACTUALITY,
+                    expected=PolicyRuleExpected.FAIL,
+                    value="Concorrentes do Nubank ou outras empresas de serviços financeiros",
+                    threshold=0.8
+                ),
+            ],
+            target=PolicyTarget.OUTPUT
+        ),
+
+        Policy(
+            id="do-not-talk-about-politics",
+            description="",
+            rules=[
+                PolicyRule(
+                    type=PolicyRuleType.CLASSIFIER,
+                    expected=PolicyRuleExpected.FAIL,
+                    value="politics", # class name or "class_name1, class_name2"
+                    threshold=0.5
+                ),
+            ],
+            target=PolicyTarget.BOTH
+        ),
+
+        Policy(
+            id="block-pii-exposure",
+            description="",
+            rules=[
+                PolicyRule(
+                    type=PolicyRuleType.PII,
+                    expected=PolicyRuleExpected.FAIL,
+                    value="email, telefone, endereço empresa, chave pix, senha, password", # add one or many labels
+                    threshold=0.7
+                ),
+            ],
+            target=PolicyTarget.OUTPUT
+        )
+    ]
+
+for p in policy_list:
+    client.add_policy(
+            **p
+    )
 ```
 
 
