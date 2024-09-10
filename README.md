@@ -143,3 +143,18 @@ for p in policy_list:
 ```
 
 
+
+
+## Run evaluate
+
+```python
+
+messages = [
+            {"role": "user", "content": "..."},
+            {"role": "assistant", "content": "..."},
+]
+policy_ids = ["detect-direct-prompt-injection", "block-pii-exposure", "do-not-mention", "follow-negotiation"]
+status_code, result = client.evaluate(messages, policy_ids=policy_ids, application_id=application_id)
+```
+
+
