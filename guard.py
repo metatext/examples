@@ -126,10 +126,7 @@ class Guard:
         self.policy += new_policy
         logger.info(f"Added policy: {new_policy.get('id')} Total: {len(self.policy)}")
     
-    def evaluate(self, messages, threshold=0.3, correction_enabled=True, override_response=None, fail_fast=False, policy_ids=None, application_id=None):
-        if policy_ids is None:
-            policy_ids = []
-
+    def evaluate(self, messages, application_id=None, policies=[], correction_enabled=False, override_response=None, fail_fast=False):
         
         assert len(messages) > 0, "Please provide at least one message to evaluate"
         assert messages[-1].get("role") == "assistant", "The last message should be from the assistant"
@@ -145,11 +142,11 @@ class Guard:
             "application": application_id,
             "correction_enabled": correction_enabled,
             "fail_fast": fail_fast,
-            "policy_ids": policy_ids
+            "override_policy": policies
         }
         endpoint = self.base_url +'/v1/evaluate'
         _, result = self.request(endpoint, data)
-        print(result)
+        
         return _, result
 
 # example usage

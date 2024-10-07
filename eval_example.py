@@ -1,10 +1,13 @@
 
-from datetime import datetime
-from guard import Guard, Policy, PolicyRuleType, PolicyRuleExpected, PolicyTarget, PolicyRule
-import openai
 import os
+from datetime import datetime
 import logging
 import json
+
+from guard import Guard, Policy, PolicyRuleType, PolicyRuleExpected, PolicyTarget, PolicyRule
+from utils import call_llm
+
+import argparse
 
 # set app logger name
 logging.basicConfig(level=logging.INFO)
@@ -13,7 +16,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("eval")
 logger.setLevel(logging.INFO)
 
-import argparse
+
+
 
 # Create an ArgumentParser object
 parser = argparse.ArgumentParser(description="Process command-line arguments.")
@@ -21,42 +25,13 @@ parser = argparse.ArgumentParser(description="Process command-line arguments.")
 # Add an argument for loading a file
 policies_ids = "block-pii-exposure, do-not-mention, follow-negotiation, detect-direct-prompt-injection"
 
-parser.add_argument('--load', type=str, help='Specify the file to load.', default=None)
-parser.add_argument('--policy-ids', type=str, help='Specify the file to load.', default=policies_ids)
-parser.add_argument('--add-policy', type=str, help='Specify the file to load.', default=False)
+parser.add_argument('--policy-ids', type=str, help='Specify the policy_ids to run.', default=policies_ids)
 
 # Parse the command-line arguments
 args = parser.parse_args()
 
-
-# logger.info("Starting the application")
-
+# Init guard client
 client = Guard(api_key=os.getenv("METATEXT_API_KEY"))
-
-def call_llm(messages):
-  response = openai.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=messages,
-    max_tokens=1000
-  )
-  return response.choices[0].message.content
-
-# Check if the --load argument was provided
-if args.load:
-    # read application from file
-    with open(args.load) as f:
-        application = json.loads(f.read())
-        application_id = application.get("application_id")
-        system_prompt = "\n".join([message.get("content") for message in application.get("messages", []) if message.get("role") == "system"])
-        #system_prompt = application.get("system_prompt")
-        client.add_application(name=application_id, system_prompt=system_prompt)
-        
-        for p in application.get("policies", []):
-            client.add_policy(
-                policy_id=p.get("id"),
-                rule=p.get("rule"),
-                examples=p.get("examples")
-            )
 
 application_id = "YOUR_APPLICATION_NAME10"
 now = datetime.now()
@@ -76,133 +51,152 @@ Do not accept or suggest anything other them the conditions. Discounts are not a
 """
 model = "gpt-4o-mini"
 
-if args.add_policy:
-    # set the current time
+client.set_application(id=application_id, name=application_id)
+
+
+
+policy_list = [
+
+    Policy(
+        id="greetings",
+        description="Enforce greetings",
+        rules=[
+            PolicyRule(
+                type=PolicyRuleType.RUBRIC,
+                expected=PolicyRuleExpected.FAIL,
+                value="""Always say greetings depending on the time of day:
+    After 1:00 AM and before 12:00 PM, say "Good morning."
+    After 12:00 PM and before 6:00 PM, say "Good afternoon."
+    After 6:00 PM and before 9:00 PM, say "Good evening."
+    After 9:00 PM and before 1:00 AM, say "Good night.""",
+                threshold=0.8, # tolerance rate: 0.0 very strict, 1.0 more lenient
+            ),
+        ],
+        target=PolicyTarget.OUTPUT, # Apply only on AI output
+    ),
+
+    
+    Policy(
+        id="detect-direct-prompt-injection",
+        description="",
+        rules=[
+            PolicyRule(
+                type=PolicyRuleType.JAILBREAK,
+                expected=PolicyRuleExpected.FAIL,
+                value="",
+                threshold=0.8,
+            ),
+        ],
+        target=PolicyTarget.INPUT, # Apply only on user input
+        override_response="Sorry i can't proceed with this.", # When this policy fails, override_response is returned
+    ),
+
+    Policy(
+        id="follow-negotiation",
+        description="",
+        rules=[
+            PolicyRule(
+                type=PolicyRuleType.RUBRIC,
+                expected=PolicyRuleExpected.FAIL,
+                value="""
+Você deve aceitar somente as condições de pagamento disponíveis, 1x de R$300 ou 3x de R$ 100. 
+Não aceite ou sugira outros termos. 
+Não ofereça descontos.""",
+                threshold=0.3, # tolerance rate: 0.0 very strict, 1.0 more lenient
+            ),
+        ],
+        target=PolicyTarget.OUTPUT
+    ),
+
     
 
-    # set up the application first
-    
-    #application_id = client.add_application(name=application_id, system_prompt=system_prompt, model=model)
-    client.set_application(id=application_id, name=application_id)
+    Policy(
+        id="do-not-mention",
+        description="",
+        rules=[
+            PolicyRule(
+                type=PolicyRuleType.CLASSIFIER,
+                expected=PolicyRuleExpected.FAIL,
+                value="Itaú, Bradesco, Santander", # class name or "class_name1, class_name2"
+                threshold=0.7
+            ),
+            PolicyRule(
+                type=PolicyRuleType.SIMILARITY,
+                expected=PolicyRuleExpected.FAIL,
+                value="concorrentes",
+                threshold=0.8
+            ),
+            PolicyRule(
+                type=PolicyRuleType.FACTUALITY,
+                expected=PolicyRuleExpected.FAIL,
+                value="Concorrentes do Nubank ou outras empresas de serviços financeiros",
+                threshold=0.8
+            ),
+        ],
+        target=PolicyTarget.OUTPUT
+    ),
 
-    # policy_1 = dict(
-    #     policy_id="greetings",
-    #     rule="""Always say greetings depending on the time of day:
-    #     After 1:00 AM and before 12:00 PM, say "Good morning."
-    #     After 12:00 PM and before 6:00 PM, say "Good afternoon."
-    #     After 6:00 PM and before 9:00 PM, say "Good evening."
-    #     After 9:00 PM and before 1:00 AM, say "Good night.""",
-    #     examples=[dict(
-    #             output_example="Saying 'Good morning!' when current time is after 6:00PM", # could add example as an instruction
-    #             type="FAIL"
-    #         ),
-    #         dict(
-    #             output_example="Hi!", # or as a message example
-    #             type="FAIL"
-    #         ),
-    #         dict(
-    #             output_example="Hi, good evening!", # another message example
-    #             type="PASS"
-    #         )   
-    #     ],
-    #     override_response=None, # could add a default response here, when it policy fails, this response is returned
-    # )
+    Policy(
+        id="hallucination-detect1",
+        description="",
+        rules=[
+            PolicyRule(
+                type=PolicyRuleType.FACTUALITY,
+                expected=PolicyRuleExpected.FAIL,
+                value="""DOCUMENT1: CONTENT, DOCUMENT2: CONTENT""", # Pass context for RAG use cases
+                threshold=0.5
+            ),
+        ],
+        target=PolicyTarget.OUTPUT
+    ),
 
-    policy_list = [
+    Policy(
+        id="support-request",
+        description="",
+        rules=[
+            PolicyRule(
+                type=PolicyRuleType.RUBRIC,
+                expected=PolicyRuleExpected.FAIL,
+                value="""Não transfira para suporte.
+Não mencione 
+Não ofereça descontos.""",
+                threshold=0.3, # tolerance rate: 0.0 very strict, 1.0 more lenient
+            ),
+        ],
+        target=PolicyTarget.OUTPUT
+    ),
 
-        
-        Policy(
-            id="detect-direct-prompt-injection",
-            description="",
-            rules=[
-                PolicyRule(
-                    type=PolicyRuleType.JAILBREAK,
-                    expected=PolicyRuleExpected.FAIL,
-                    value="",
-                    threshold=0.8,
-                ),
-            ],
-            target=PolicyTarget.INPUT
-        ),
+    Policy(
+        id="do-not-talk-about-politics",
+        description="",
+        rules=[
+            PolicyRule(
+                type=PolicyRuleType.CLASSIFIER,
+                expected=PolicyRuleExpected.FAIL,
+                value="politics topic, elections, politic names", # "class name" or "class_name1, class_name2"
+                threshold=0.5
+            ),
+        ],
+        target=PolicyTarget.BOTH
+    ),
 
-        
+    Policy(
+        id="block-pii-exposure",
+        description="",
+        rules=[
+            PolicyRule(
+                type=PolicyRuleType.PII,
+                expected=PolicyRuleExpected.FAIL,
+                value="email, telefone, endereço empresa, chave pix, senha, password", # supported types: https://docs.metatext.ai/guardrails-types/pii
+                threshold=0.7
+            ),
+        ],
+        target=PolicyTarget.OUTPUT
+    )
+]
 
-        Policy(
-            id="follow-negotiation",
-            description="",
-            rules=[
-                PolicyRule(
-                    type=PolicyRuleType.RUBRIC,
-                    expected=PolicyRuleExpected.FAIL,
-                    value="Você deve trabalhar somente as condições de pagamento disponíveis, 1x de R$300 ou 3x de R$ 100. Não aceite ou sugira outros termos. Sem descontos.",
-                    threshold=0.3, # 0.0 very strict, 1.0 would be more lenient
-                ),
-            ],
-            target=PolicyTarget.OUTPUT
-        ),
 
-        
-
-        Policy(
-            id="do-not-mention",
-            description="",
-            rules=[
-                PolicyRule(
-                    type=PolicyRuleType.CLASSIFIER,
-                    expected=PolicyRuleExpected.FAIL,
-                    value="Itaú, Bradesco, Santander", # class name or "class_name1, class_name2"
-                    threshold=0.7
-                ),
-                PolicyRule(
-                    type=PolicyRuleType.SIMILARITY,
-                    expected=PolicyRuleExpected.FAIL,
-                    value="concorrentes",
-                    threshold=0.8
-                ),
-                PolicyRule(
-                    type=PolicyRuleType.FACTUALITY,
-                    expected=PolicyRuleExpected.FAIL,
-                    value="Concorrentes do Nubank ou outras empresas de serviços financeiros",
-                    threshold=0.8
-                ),
-            ],
-            target=PolicyTarget.OUTPUT
-        ),
-
-        Policy(
-            id="do-not-talk-about-politics",
-            description="",
-            rules=[
-                PolicyRule(
-                    type=PolicyRuleType.CLASSIFIER,
-                    expected=PolicyRuleExpected.FAIL,
-                    value="politics", # class name or "class_name1, class_name2"
-                    threshold=0.5
-                ),
-            ],
-            target=PolicyTarget.BOTH
-        ),
-
-        Policy(
-            id="block-pii-exposure",
-            description="",
-            rules=[
-                PolicyRule(
-                    type=PolicyRuleType.PII,
-                    expected=PolicyRuleExpected.FAIL,
-                    value="email, telefone, endereço empresa, chave pix, senha, password", # add one or many labels
-                    threshold=0.7
-                ),
-            ],
-            target=PolicyTarget.OUTPUT
-        )
-    ]
-
-    # then set up the policy
-    for p in policy_list:
-        client.add_policy(
-            p
-        )
+policy_list = [p for p in policy_list if p.id in args.policy_ids]
 
 # user input
 messages = [{"role": "system", "content": system_prompt}]
@@ -230,7 +224,7 @@ while True:
 
     # run guard evaluate
     policy_ids = args.policy_ids.split(",") if isinstance(args.policy_ids, str) else [args.policy_ids]
-    status_code, result = client.evaluate(messages, policy_ids=policy_ids, application_id=application_id)
+    status_code, result = client.evaluate(messages, application_id=application_id, policies=policy_list)
 
     logger.info(f"Evaluation result: {result.get('status')}")
     if result.get("status") == "FAIL":
