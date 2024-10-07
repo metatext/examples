@@ -20,7 +20,6 @@ policy_list = [
         ],
         target=PolicyTarget.OUTPUT, # Apply only on AI output
     ),
-
     
     Policy(
         id="detect-direct-prompt-injection",
